@@ -538,14 +538,15 @@
       overflow:hidden;
     }
 
-    /* ── Globe fills the screen ── */
+    /* ── Globe fills the full 100svh section ── */
     .globe-wrap{
       position:absolute;
-      left:50%;top:50%;
-      transform:translate(-50%,-50%);
-      width:min(98vw, 98svh);
-      height:min(98vw, 98svh);
+      inset:0;
+      width:100%;
+      height:100%;
       margin:0;
+      transform:none;
+      left:auto;top:auto;
       display:block;
       opacity:1;
       cursor:grab;

@@ -380,6 +380,30 @@
   .intro-pending .marker-dot:not(.hub)::after{animation-play-state:paused;}
   @keyframes pulse{0%{transform:scale(.5);opacity:.8;}100%{transform:scale(2.4);opacity:0;}}
 
+  /* ── Day / Night interaction state ── */
+  /* Smooth transitions so night/day state changes never feel abrupt */
+  .marker-connector{transition:opacity .4s ease, background 1.2s ease, box-shadow 1.2s ease;}
+  .marker-dot{transition:opacity .4s ease, box-shadow 1.2s ease, background 1.2s ease;}
+  .marker-pill{transition:transform .35s cubic-bezier(.22,1,.36,1), filter .6s ease, box-shadow 1.2s ease;}
+
+  /* Night mode: brighter labels, golden connectors, pronounced pin glow */
+  .markers-is-night .marker-connector{
+    background:linear-gradient(to top, rgba(248,210,80,.98), rgba(248,210,80,.0));
+    box-shadow:0 0 6px rgba(248,210,80,.75), 0 0 16px rgba(248,210,80,.32);
+  }
+  .markers-is-night .marker-dot:not(.hub){
+    background:#f0c840;
+    box-shadow:0 0 0 2px rgba(248,210,80,.38), 0 0 12px rgba(248,210,80,.80), 0 0 24px rgba(248,210,80,.32);
+  }
+  .markers-is-night .marker-pill{filter:brightness(1.22);}
+  .markers-is-night .marker-pill.is-hub{
+    box-shadow:
+      0 2px 0 rgba(255,228,100,.18) inset,
+      0 22px 56px rgba(0,0,0,.80),
+      0 0 64px rgba(220,180,80,.45),
+      0 0 110px rgba(220,180,80,.18);
+  }
+
   /* UAE HQ ambient terrain glow — slightly brighter and larger */
   .hub-glow{
     position:absolute;z-index:4;width:260px;height:260px;border-radius:50%;
@@ -757,6 +781,7 @@ const arcsSvg = document.getElementById('arcs');
 const markerObjs = {};
 let hubGlowEl;
 let renderer, scene, camera, globe, clouds, atmosphere, nightMesh;
+let sunLight, sunSecondaryLight, fillLight, rimLight, hemiLight, ambientLight;
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- cinematic intro timeline (Phase 2) ----------
@@ -814,30 +839,22 @@ function initScene(){
   // shadow hemisphere so oceans read as blue rather than grey.
   // Hemisphere: lighter ice-blue sky lifts shadow-side oceans; warm sienna
   // ground keeps continents from going grey on the dark hemisphere.
-  scene.add(new THREE.HemisphereLight(0xc2d8f5, 0x2e1e0a, 0.52));
-  // Ambient: very low cool blue — just lifts absolute blacks on shadow side.
-  scene.add(new THREE.AmbientLight(0x4a6890, 0.13));
-  // Primary sun: warm white-gold (#FFF4D6) from upper-right — the headline
-  // light that carves terrain relief and defines the terminator.
-  const sun = new THREE.DirectionalLight(0xfff4d6, 2.05);
-  sun.position.set(-3.2, 2.6, 3.2);
-  scene.add(sun);
-  // Secondary warm accent: pure golden (#F7E3A0) from a higher angle to
-  // paint the top-right limb with warm sunrise gold without overexposing.
-  const sunSecondary = new THREE.DirectionalLight(0xf7e3a0, 0.52);
-  sunSecondary.position.set(-1.6, 4.2, 1.8);
-  scene.add(sunSecondary);
-  // Shadow-side fill: soft powder blue (#DDEBFF) — lifts the shadow
-  // hemisphere to a rich cool tone instead of near-black. Positioned to
-  // reach the left limb and the shadow-facing ocean surfaces.
-  const fill = new THREE.DirectionalLight(0xddeeff, 0.24);
-  fill.position.set(3.0, 0.5, -1.5);
-  scene.add(fill);
-  // Deep-shadow rim: pale blue (#BFD8FF) on the far dark limb — keeps the
-  // shadow edge legible against the background without a second-sun effect.
-  const rim = new THREE.DirectionalLight(0xbfd8ff, 0.18);
-  rim.position.set(2.5, -0.5, -2.5);
-  scene.add(rim);
+  hemiLight = new THREE.HemisphereLight(0xc2d8f5, 0x2e1e0a, 0.52);
+  scene.add(hemiLight);
+  ambientLight = new THREE.AmbientLight(0x4a6890, 0.13);
+  scene.add(ambientLight);
+  sunLight = new THREE.DirectionalLight(0xfff4d6, 2.05);
+  sunLight.position.set(-3.2, 2.6, 3.2);
+  scene.add(sunLight);
+  sunSecondaryLight = new THREE.DirectionalLight(0xf7e3a0, 0.52);
+  sunSecondaryLight.position.set(-1.6, 4.2, 1.8);
+  scene.add(sunSecondaryLight);
+  fillLight = new THREE.DirectionalLight(0xddeeff, 0.24);
+  fillLight.position.set(3.0, 0.5, -1.5);
+  scene.add(fillLight);
+  rimLight = new THREE.DirectionalLight(0xbfd8ff, 0.18);
+  rimLight.position.set(2.5, -0.5, -2.5);
+  scene.add(rimLight);
 
   const geo = new THREE.SphereGeometry(CONFIG.globeRadius, 96, 96);
   // Higher shininess = tighter, smaller highlight (water glint) rather than
@@ -877,7 +894,7 @@ function initScene(){
     // uIntensity drives the sunrise-style atmospheric reveal on load (and a
     // near-imperceptible idle "breathing" afterward) without touching the
     // base fresnel math.
-    uniforms:{ uIntensity:{ value: reduceMotion ? 1 : 0 } },
+    uniforms:{ uIntensity:{ value: reduceMotion ? 1 : 0 }, uNightBlend:{ value: 0.0 } },
     vertexShader:`
       varying vec3 vNormal;
       varying vec3 vWorldPos;
@@ -891,31 +908,25 @@ function initScene(){
     // view vector — a thin, physically-motivated rim rather than a flat ring.
     fragmentShader:`
       uniform float uIntensity;
+      uniform float uNightBlend;
       varying vec3 vNormal;
       varying vec3 vWorldPos;
       void main(){
         vec3 viewDir = normalize(cameraPosition - vWorldPos);
-        // Sun position matches the DirectionalLight in the scene.
-        // worldNormal is valid for a sphere centred at origin.
         vec3 sunDir     = normalize(vec3(-3.2, 2.6, 3.2));
         vec3 worldNorm  = normalize(vWorldPos);
         float sunFacing = dot(worldNorm, sunDir);
-        // Warm white on sunlit limb (#FFFDF8), barely-cool on shadow (#EAF5FF).
-        // Blend is gentle — sunlit side reads as warmth, not as colour shift.
-        // Warm white on sunlit limb, pale ice-blue on shadow — physically
-        // motivated: Rayleigh scattering cools toward the terminator.
-        // Near-white on sunlit limb, barely-cool on shadow — no visible blue.
-        // warm: #FFFDF9, cool: #EEF5FF (per spec).
         vec3 warmAtmo = vec3(1.000, 0.995, 0.985);
         vec3 coolAtmo = vec3(0.933, 0.961, 1.000);
-        vec3 atmoColor = mix(coolAtmo, warmAtmo,
-                             clamp(sunFacing * 0.70 + 0.55, 0.0, 1.0));
-        // Shadow side drops to ~12% of sunlit brightness — faint white edge.
-        float sunBoost = clamp(sunFacing * 0.72 + 0.24, 0.12, 1.0);
+        vec3 nightAtmo = vec3(0.12, 0.30, 0.88);
+        vec3 dayAtmo = mix(coolAtmo, warmAtmo, clamp(sunFacing * 0.70 + 0.55, 0.0, 1.0));
+        vec3 atmoColor = mix(dayAtmo, nightAtmo, uNightBlend);
+        float sunBoost = mix(clamp(sunFacing * 0.72 + 0.24, 0.12, 1.0), 0.60, uNightBlend);
         float fresnel = dot(vNormal, viewDir);
-        // Power 4.8 = tight limb falloff; invisible 10° inward from edge.
-        float intensity = pow(clamp(0.60 - fresnel, 0.0, 1.0), 4.8);
-        gl_FragColor = vec4(atmoColor, 1.0) * intensity * 0.52 * sunBoost * uIntensity;
+        float rimPower = mix(4.8, 3.6, uNightBlend);
+        float intensity = pow(clamp(0.60 - fresnel, 0.0, 1.0), rimPower);
+        float nightBoost = 1.0 + uNightBlend * 0.75;
+        gl_FragColor = vec4(atmoColor, 1.0) * intensity * 0.52 * sunBoost * uIntensity * nightBoost;
       }`
   });
   atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
@@ -1108,9 +1119,8 @@ function buildNightLights(nightTexture){
     uniforms:{
       nightTexture:{ value: nightTexture },
       sunDir:{ value: sunDir },
-      // Driven each frame in animate() with a slow sine — an almost
-      // imperceptible twinkle so the lit side never looks perfectly static.
-      uTwinkle:{ value: 1.0 }
+      uTwinkle:{ value: 1.0 },
+      uGlobalNight:{ value: 0.0 }
     },
     vertexShader:`
       varying vec3 vWorldNormal;
@@ -1124,20 +1134,20 @@ function buildNightLights(nightTexture){
       uniform sampler2D nightTexture;
       uniform vec3 sunDir;
       uniform float uTwinkle;
+      uniform float uGlobalNight;
       varying vec3 vWorldNormal;
       varying vec2 vUv;
       void main(){
         float lit = dot(vWorldNormal, sunDir);
-        // Ascending edge0 < edge1 (required for defined smoothstep behavior
-        // in GLSL ES 1.00 / WebGL1) — fades in gradually across the terminator
-        // band rather than snapping on at the horizon.
-        float darkness = smoothstep(-0.18, 0.22, -lit);
-        vec3 cityColor = vec3(1.0, 0.78, 0.42); // warm gold, not raw-white
+        float physicalDark = smoothstep(-0.18, 0.22, -lit);
+        // Storytelling override: in night mode city lights emerge everywhere,
+        // not just on the physical shadow hemisphere.
+        float darkness = max(physicalDark, uGlobalNight * 0.90);
+        vec3 cityColor = vec3(1.0, 0.82, 0.44);
         float luminance = texture2D(nightTexture, vUv).r;
         vec3 lights = cityColor * luminance;
-        // Kept deliberately subtle: 0.55 ceiling so lights read as a soft
-        // glow accent, not a bright overlay competing with the day side.
-        gl_FragColor = vec4(lights, 1.0) * darkness * 0.55 * uTwinkle;
+        float ceiling = mix(0.55, 1.30, uGlobalNight);
+        gl_FragColor = vec4(lights, 1.0) * darkness * ceiling * uTwinkle;
       }`
   });
   nightMesh = new THREE.Mesh(geo, mat);
@@ -1159,6 +1169,7 @@ function resizeRenderer(){
 let dragging = false, lastX = 0, lastY = 0, velY = 0, cloudDrift = 0;
 let oscCenter = null, oscDir = 1;
 const OSC_RANGE = Math.PI / 2; // 90 degrees each way
+let accumRot = 0, lastGlobeYTrack = null, nightBlend = 0;
 
 function pointerDown(e){
   if(isCompact()) return;
@@ -1246,6 +1257,62 @@ function animate(){
   clouds.rotation.x = globe.rotation.x;
   clouds.rotation.y = globe.rotation.y + cloudDrift;
   if(nightMesh) nightMesh.rotation.copy(globe.rotation);
+  // ── Day / Night accumulated rotation system ──
+  if(lastGlobeYTrack === null) lastGlobeYTrack = globe.rotation.y;
+  if(!introActive){
+    const delta = Math.abs(globe.rotation.y - lastGlobeYTrack);
+    if(delta < 0.5) accumRot += delta; // cap prevents jump artifacts on wrap-around
+  }
+  lastGlobeYTrack = globe.rotation.y;
+
+  // 720° full cycle: 0-300=Day, 300-360=→Night, 360-660=Night, 660-720=→Day
+  const cycleDeg = (accumRot * 180 / Math.PI) % 720;
+  let targetNight = 0;
+  if(cycleDeg < 300)      targetNight = 0;
+  else if(cycleDeg < 360) targetNight = (cycleDeg - 300) / 60;
+  else if(cycleDeg < 660) targetNight = 1;
+  else                    targetNight = 1 - (cycleDeg - 660) / 60;
+
+  // Smooth lerp — ~3s full transition at 60fps, feels cinematic not mechanical
+  nightBlend += (targetNight - nightBlend) * 0.018;
+  nightBlend = Math.max(0, Math.min(1, nightBlend));
+
+  // Lighting: sun dims, rim enriches, ambient lifts slightly
+  if(sunLight){
+    sunLight.intensity        = 2.05 * (1 - nightBlend * 0.92);
+    sunSecondaryLight.intensity = 0.52 * (1 - nightBlend);
+    fillLight.intensity       = 0.24 * (1 - nightBlend * 0.65);
+    rimLight.intensity        = 0.18 + nightBlend * 0.30;
+    rimLight.color.setRGB(
+      0.749 - nightBlend * 0.35,
+      0.847 - nightBlend * 0.35,
+      1.0
+    );
+    hemiLight.intensity       = 0.52 * (1 - nightBlend * 0.45);
+    ambientLight.intensity    = 0.13 + nightBlend * 0.10;
+  }
+
+  // Globe surface: darken day texture toward deep space blue-black
+  if(globe.material){
+    const g = 1 - nightBlend * 0.88;
+    globe.material.color.setRGB(g, g, Math.min(1, g + nightBlend * 0.18));
+  }
+
+  // Clouds: thin out in night mode, keep faint wisps
+  if(clouds && clouds.material) clouds.material.opacity = 0.17 * (1 - nightBlend * 0.78);
+
+  // Night mesh: storytelling global override so city lights emerge everywhere
+  if(nightMesh) nightMesh.material.uniforms.uGlobalNight.value = nightBlend;
+
+  // Atmosphere: shift to deep blue night rim
+  if(atmosphere) atmosphere.material.uniforms.uNightBlend.value = nightBlend;
+
+  // Tone mapping: pull exposure down for a darker, richer night feel
+  renderer.toneMappingExposure = 1.28 - nightBlend * 0.44;
+
+  // Markers: CSS night class for label/connector glow transitions
+  markersEl.classList.toggle('markers-is-night', nightBlend > 0.12);
+
   renderer.render(scene, camera);
   updateMarkers();
 }

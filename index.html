@@ -1279,27 +1279,28 @@ function animate(){
 
   // Lighting: sun dims, rim enriches, ambient lifts slightly
   if(sunLight){
-    sunLight.intensity        = 2.05 * (1 - nightBlend * 0.92);
-    sunSecondaryLight.intensity = 0.52 * (1 - nightBlend);
-    fillLight.intensity       = 0.24 * (1 - nightBlend * 0.65);
-    rimLight.intensity        = 0.18 + nightBlend * 0.30;
+    sunLight.intensity          = 2.05 * (1 - nightBlend * 0.72);
+    sunSecondaryLight.intensity = 0.52 * (1 - nightBlend * 0.80);
+    fillLight.intensity         = 0.24 * (1 - nightBlend * 0.40);
+    rimLight.intensity          = 0.18 + nightBlend * 0.38;
     rimLight.color.setRGB(
-      0.749 - nightBlend * 0.35,
-      0.847 - nightBlend * 0.35,
+      0.749 - nightBlend * 0.30,
+      0.847 - nightBlend * 0.28,
       1.0
     );
-    hemiLight.intensity       = 0.52 * (1 - nightBlend * 0.45);
-    ambientLight.intensity    = 0.13 + nightBlend * 0.10;
+    hemiLight.intensity         = 0.52 * (1 - nightBlend * 0.30);
+    ambientLight.intensity      = 0.13 + nightBlend * 0.18;
   }
 
-  // Globe surface: darken day texture toward deep space blue-black
+  // Globe surface: shift to cool night blue — keep terrain visible, not black
   if(globe.material){
-    const g = 1 - nightBlend * 0.88;
-    globe.material.color.setRGB(g, g, Math.min(1, g + nightBlend * 0.18));
+    const g = 1 - nightBlend * 0.52;           // 48% brightness floor at full night
+    const b = Math.min(1, g + nightBlend * 0.22); // blue channel stays lifted
+    globe.material.color.setRGB(g * 0.88, g * 0.92, b);
   }
 
-  // Clouds: thin out in night mode, keep faint wisps
-  if(clouds && clouds.material) clouds.material.opacity = 0.17 * (1 - nightBlend * 0.78);
+  // Clouds: fade most of the way out so city lights read cleanly through
+  if(clouds && clouds.material) clouds.material.opacity = 0.17 * (1 - nightBlend * 0.70);
 
   // Night mesh: storytelling global override so city lights emerge everywhere
   if(nightMesh) nightMesh.material.uniforms.uGlobalNight.value = nightBlend;
@@ -1307,8 +1308,8 @@ function animate(){
   // Atmosphere: shift to deep blue night rim
   if(atmosphere) atmosphere.material.uniforms.uNightBlend.value = nightBlend;
 
-  // Tone mapping: pull exposure down for a darker, richer night feel
-  renderer.toneMappingExposure = 1.28 - nightBlend * 0.44;
+  // Tone mapping: subtle pull-down only, keep enough exposure to see terrain
+  renderer.toneMappingExposure = 1.28 - nightBlend * 0.26;
 
   // Markers: CSS night class for label/connector glow transitions
   markersEl.classList.toggle('markers-is-night', nightBlend > 0.12);

@@ -554,9 +554,9 @@
     }
     .globe-wrap.is-dragging{cursor:grabbing;}
 
-    /* Decorative bg layers — keep stars/sun for night mode, skip heavy ones */
-    .globe-glow,.nebula,.vignette{display:none;}
-    .stars,.sun-flare{display:block;}
+    /* Decorative bg layers */
+    .nebula,.vignette{display:none;}
+    .globe-glow,.stars,.sun-flare{display:block;}
     #arcs{display:none;}
 
     /* Fade at the bottom of the globe section into the panel */
@@ -905,6 +905,9 @@ let hubRevealed = reduceMotion;
 let lastReleaseTime = -1e9; // far in the past so idle auto-rotate is full-speed once intro ends
 
 function isCompact(){ return window.innerWidth <= 880; }
+
+// Move camera closer on mobile so the globe fills more of the screen
+if(isCompact()) CONFIG.cameraZ = 13.0;
 
 function initScene(){
   renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true, precision:'highp' });
@@ -1526,7 +1529,7 @@ function project(vec3){
 }
 
 function updateMarkers(){
-  const show = !isCompact();
+  const show = true; // markers visible on all screen sizes
   CONFIG.countries.forEach(c=>{
     const m = markerObjs[c.id];
     const p = project(m.vec3);

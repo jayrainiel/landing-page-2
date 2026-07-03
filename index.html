@@ -342,9 +342,9 @@
   .pill-label{display:flex;flex-direction:column;gap:2px;}
   .pill-country{font-size:13px;font-weight:600;color:#eef4ff;line-height:1.15;letter-spacing:.01em;}
   .pill-city{font-size:10px;font-weight:500;color:rgba(216,177,90,0.85);letter-spacing:.04em;line-height:1.15;}
-  /* UAE: ~28% larger country text, proportionally larger city */
-  .marker-pill.is-hub .pill-country{font-size:17px;font-weight:700;letter-spacing:.005em;}
-  .marker-pill.is-hub .pill-city{font-size:11px;color:rgba(248,210,80,0.95);letter-spacing:.05em;}
+  /* UAE: same size as other markers */
+  .marker-pill.is-hub .pill-country{font-size:13px;font-weight:600;letter-spacing:.01em;}
+  .marker-pill.is-hub .pill-city{font-size:10px;color:rgba(248,210,80,0.95);letter-spacing:.04em;}
 
   .marker-pill{
     display:flex;align-items:center;gap:10px;
@@ -365,16 +365,12 @@
     transition:transform .35s cubic-bezier(.22,1,.36,1), filter .35s cubic-bezier(.22,1,.36,1), box-shadow .35s cubic-bezier(.22,1,.36,1);
     will-change:transform;
   }
-  /* UAE headquarters — same text size as other markers */
-  .marker-pill.is-hub .pill-country{font-size:13px;font-weight:600;}
-  .marker-pill.is-hub .pill-city{font-size:10px;color:rgba(248,210,80,0.95);letter-spacing:.05em;}
-  /* UAE headquarters — visually dominant */
+  /* UAE headquarters — same padding and gap as regular pills */
   .marker-pill.is-hub{
     background:rgba(36,26,4,.72);
     border-color:rgba(243,198,61,.45);
     border-top-color:rgba(255,222,80,.55);
-    padding:14px 28px 14px 13px;gap:13px;
-    letter-spacing:.01em;
+    padding:9px 18px 9px 8px;gap:10px;
     box-shadow:
       0 2px 0 rgba(255,228,100,.10) inset,
       0 22px 56px rgba(0,0,0,.65),
@@ -382,8 +378,15 @@
       0 0 40px rgba(220,180,80,.22),
       0 0 80px rgba(220,180,80,.08);
   }
-  .marker-pill .flag{width:18px;height:13px;border-radius:3px;overflow:hidden;flex:none;box-shadow:0 0 0 1px rgba(255,255,255,.25),0 1px 3px rgba(0,0,0,.4);}
-  .marker-pill.is-hub .flag{width:30px;height:21px;border-radius:4px;box-shadow:0 0 0 1px rgba(243,198,61,.45),0 1px 4px rgba(0,0,0,.5);}
+  .marker-pill .flag{
+    width:18px;height:13px;border-radius:3px;overflow:hidden;flex:none;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 0 1px rgba(255,255,255,.25),0 1px 3px rgba(0,0,0,.4);
+  }
+  .marker-pill.is-hub .flag{
+    width:18px;height:13px;border-radius:3px;
+    box-shadow:0 0 0 1px rgba(243,198,61,.45),0 1px 4px rgba(0,0,0,.5);
+  }
 
   .marker-pill:hover{
     animation-play-state:paused !important;

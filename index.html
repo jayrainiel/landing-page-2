@@ -1157,6 +1157,8 @@ function resizeRenderer(){
 // Vertical tilt (rotation.x) is set once during init and then locked —
 // drag only ever spins the globe sideways (longitude), never up/down.
 let dragging = false, lastX = 0, lastY = 0, velY = 0, cloudDrift = 0;
+let oscCenter = null, oscDir = 1;
+const OSC_RANGE = Math.PI / 2; // 90 degrees each way
 
 function pointerDown(e){
   if(isCompact()) return;
@@ -1220,11 +1222,20 @@ function animate(){
       // while the camera is still settling into composition.
       velY *= 0.973;
     } else {
-      // After release, coast on inertia alone for ~1s before automatic
-      // rotation eases back in — the handoff should be imperceptible.
+      // After release, coast on inertia alone for ~1s before pendulum
+      // oscillation eases back in — the handoff should be imperceptible.
       const sinceRelease = now - lastReleaseTime;
       const autoFactor = sinceRelease < 1000 ? 0 : Math.min(1, (sinceRelease-1000)/800);
-      if(!reduceMotion) globe.rotation.y += CONFIG.autoRotateSpeed*autoFactor + velY;
+      if(!reduceMotion && autoFactor > 0){
+        // Lock in the center once, right after intro settles
+        if(oscCenter === null) oscCenter = globe.rotation.y;
+        const offset = globe.rotation.y - oscCenter;
+        // Flip direction when the globe reaches ±90° from center
+        if(offset >= OSC_RANGE){ oscDir = -1; globe.rotation.y = oscCenter + OSC_RANGE; }
+        else if(offset <= -OSC_RANGE){ oscDir = 1; globe.rotation.y = oscCenter - OSC_RANGE; }
+        globe.rotation.y += CONFIG.autoRotateSpeed * oscDir * autoFactor;
+      }
+      if(!reduceMotion) globe.rotation.y += velY;
       velY *= 0.973;
     }
   }

@@ -1237,30 +1237,10 @@ function animate(){
       // while the camera is still settling into composition.
       velY *= 0.973;
     } else {
-      // After release, coast on inertia alone for ~1s before pendulum
-      // oscillation eases back in — the handoff should be imperceptible.
       const sinceRelease = now - lastReleaseTime;
       const autoFactor = sinceRelease < 1000 ? 0 : Math.min(1, (sinceRelease-1000)/800);
-      if(!reduceMotion && autoFactor > 0){
-        globe.rotation.y += CONFIG.autoRotateSpeed * oscDir * autoFactor;
-      }
-      if(!reduceMotion) globe.rotation.y += velY;
+      if(!reduceMotion) globe.rotation.y += CONFIG.autoRotateSpeed * autoFactor + velY;
       velY *= 0.973;
-      // Enforce pendulum walls AFTER all motion (pendulum + inertia) is applied.
-      // This prevents velY from carrying the globe past ±90° during the coast
-      // phase (when autoFactor=0 and the direction-flip wasn't running).
-      if(oscCenter !== null){
-        const offset = globe.rotation.y - oscCenter;
-        if(offset >= OSC_RANGE){
-          globe.rotation.y = oscCenter + OSC_RANGE;
-          oscDir = -1;
-          if(velY > 0) velY = 0; // kill rightward inertia at right wall
-        } else if(offset <= -OSC_RANGE){
-          globe.rotation.y = oscCenter - OSC_RANGE;
-          oscDir = 1;
-          if(velY < 0) velY = 0; // kill leftward inertia at left wall
-        }
-      }
     }
   }
   // Clouds always carry their own drift on top of the globe's current

@@ -36,7 +36,9 @@
       radial-gradient(ellipse 80% 70% at 70% 50%, #f7fbff 0%, #ecf4fc 55%, #dfedfb 100%);
   }
 
-  .nebula, .stars{display:none;}
+  .nebula{display:none;}
+  /* Stars hidden by default, revealed on night mode */
+  .stars{opacity:0;pointer-events:none;transition:opacity 2.5s ease;}
 
   .vignette{
     position:absolute;inset:0;z-index:6;pointer-events:none;
@@ -141,6 +143,78 @@
   svg#arcs{position:absolute;z-index:3;pointer-events:none;overflow:visible;width:100%;height:100%;top:0;left:0;}
 
   /* Sun-ray bloom — positioned at top-right edge of the globe sphere */
+  /* ── Full-page Day / Night theme ── */
+
+  /* Dark space background overlay — fades in over the day gradient */
+  .scene::before{
+    content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+    background:radial-gradient(ellipse 120% 120% at 70% 50%, #030c1e 0%, #010609 100%);
+    opacity:0;transition:opacity 2.5s ease;
+  }
+  .scene.is-night::before{opacity:1;}
+
+  /* Stars appear at night */
+  .scene.is-night .stars{opacity:1;}
+
+  /* Sun flare fades out */
+  .sun-flare{transition:opacity 2s ease;}
+  .scene.is-night .sun-flare{opacity:0;}
+
+  /* Scrim cross-fade: light day scrim → dark night scrim */
+  .scrim{transition:opacity 1.8s ease;}
+  .scene.is-night .scrim{opacity:0;}
+  .scrim-night{
+    position:absolute;inset:0;z-index:4;pointer-events:none;
+    background:linear-gradient(90deg,
+      rgba(2,6,20,1) 0%, rgba(2,6,20,.97) 30%, rgba(2,6,20,.88) 42%,
+      rgba(2,6,20,.58) 50%, rgba(2,6,20,.20) 60%, rgba(2,6,20,.05) 68%, rgba(2,6,20,0) 76%);
+    opacity:0;transition:opacity 1.8s ease;
+  }
+  .scene.is-night .scrim-night{opacity:1;}
+
+  /* Text colour transitions */
+  h1,.desc,.eyebrow,.hint{transition:color 1.8s ease;}
+  .stat .num,.stat .label,.stat .icon{transition:color 1.8s ease;}
+  .stat:nth-child(n+2)::before{transition:background 1.8s ease;}
+
+  /* Night text overrides */
+  .scene.is-night h1{color:#d8e8ff;}
+  .scene.is-night .desc{color:#6a8cb0;}
+  .scene.is-night .eyebrow{color:#3a5e98;}
+  .scene.is-night .stat .num{color:#b0c8ec;}
+  .scene.is-night .stat .label{color:#4e7090;}
+  .scene.is-night .stat .icon{color:#3a5e98;}
+  .scene.is-night .stat:nth-child(n+2)::before{background:rgba(60,100,160,.18);}
+  .scene.is-night .hint{color:#2e4868;}
+
+  /* Nav buttons */
+  .nav-right .pill-btn{transition:background 1.8s ease, color 1.8s ease, border-color 1.8s ease, box-shadow 1.8s ease;}
+  .scene.is-night .nav-right .pill-btn{
+    background:rgba(8,18,44,.72);color:#7aa0c8;
+    border-color:rgba(60,100,180,.22);box-shadow:0 6px 18px rgba(0,5,20,.45);
+  }
+  .scene.is-night .nav-right .pill-btn svg{color:#3a68b0;}
+  .scene.is-night .nav-right .menu-btn{background:rgba(15,30,70,.75);}
+
+  /* CTA button */
+  .cta{transition:background 1.8s ease, box-shadow 1.8s ease;}
+  .scene.is-night .cta{
+    background:linear-gradient(180deg,#2648c8,#142e98);
+    box-shadow:0 10px 28px rgba(20,50,180,.55);
+  }
+
+  /* Stats dividers stay but shift to dark */
+  /* Trust badge */
+  .trust-badge{transition:background 1.8s ease, border-color 1.8s ease, box-shadow 1.8s ease;}
+  .trust-badge span{transition:color 1.8s ease;}
+  .scene.is-night .trust-badge{
+    background:rgba(6,14,36,.72);
+    border-color:rgba(50,90,150,.22);
+    box-shadow:0 8px 22px rgba(0,5,25,.45);
+  }
+  .scene.is-night .trust-badge span{color:#4a72a0;}
+  .scene.is-night .trust-badge .check{background:rgba(10,40,24,.65);}
+
   .sun-flare{
     position:absolute;z-index:4;pointer-events:none;
     /* Globe center is ~70% left, ~54% top. Top-right of sphere ~79% left, ~22% top */
@@ -571,6 +645,7 @@
   <svg id="arcs"></svg>
 
   <div class="scrim"></div>
+  <div class="scrim-night"></div>
   <div class="vignette" aria-hidden="true"></div>
 
   <div class="nav">
@@ -679,7 +754,7 @@ const CONFIG = {
   globeRadius: 2.74,
   cameraZ: 18.0,
   cameraTiltDeg: 17,
-  autoRotateSpeed: 0.000280,
+  autoRotateSpeed: 0.000070,
   TEXTURES: {
     day:      './textures/earth-day.jpg',
     clouds:   './textures/earth-clouds.png',
@@ -1304,8 +1379,10 @@ function animate(){
   // Tone mapping: subtle pull-down only, keep enough exposure to see terrain
   renderer.toneMappingExposure = 1.28 - nightBlend * 0.26;
 
-  // Markers: CSS night class for label/connector glow transitions
-  markersEl.classList.toggle('markers-is-night', nightBlend > 0.12);
+  // Markers + full page: CSS night class for all day/night theme transitions
+  const isNight = nightBlend > 0.12;
+  markersEl.classList.toggle('markers-is-night', isNight);
+  document.getElementById('scene').classList.toggle('is-night', isNight);
 
   renderer.render(scene, camera);
   updateMarkers();

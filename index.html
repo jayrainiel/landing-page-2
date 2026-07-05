@@ -345,7 +345,7 @@
 
   .pill-label{display:flex;flex-direction:column;gap:2px;}
   .pill-country{font-size:13px;font-weight:600;color:#eef4ff;line-height:1.15;letter-spacing:.01em;}
-  .pill-city{font-size:10px;font-weight:500;color:rgba(216,177,90,0.85);letter-spacing:.04em;line-height:1.15;}
+  .pill-city{display:none;}
   /* UAE: same size as other markers */
   .marker-pill.is-hub .pill-country{font-size:13px;font-weight:600;letter-spacing:.01em;}
   .marker-pill.is-hub .pill-city{font-size:10px;color:rgba(248,210,80,0.95);letter-spacing:.04em;}
@@ -754,7 +754,7 @@ const CONFIG = {
     // true projected lat/lon) so close-together Gulf countries don't overlap.
     { id:'uae',   name:'UAE',   city:'Abu Dhabi', lat:24.4539, lon:54.3773, hub:true,  labelDx:72,  labelDy:-8  },
     { id:'qatar', name:'Qatar', city:'Doha',      lat:25.2854, lon:51.5310, hub:false, labelDx:22,  labelDy:-58 },
-    { id:'ksa',   name:'KSA',   city:'Riyadh',    lat:24.7136, lon:46.6753, hub:false, labelDx:-82, labelDy:4   },
+    { id:'ksa',   name:'KSA',   city:'Riyadh',    lat:24.7136, lon:46.6753, hub:false, labelDx:-82, labelDy:65  },
     { id:'syria', name:'Syria', city:'Damascus',  lat:33.5138, lon:36.2765, hub:false, labelDx:-8,  labelDy:-6  }
   ],
   hubId: 'uae',

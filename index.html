@@ -1285,7 +1285,6 @@ const OSC_RANGE = Math.PI / 2; // 90 degrees each way
 let accumRot = 0, lastGlobeYTrack = null, nightBlend = 0;
 
 function pointerDown(e){
-  if(isCompact()) return;
   dragging = true;
   wrap.classList.add('is-dragging');
   lastX = e.clientX; lastY = e.clientY;
@@ -1295,12 +1294,8 @@ function pointerMove(e){
   if(!dragging) return;
   const dx = e.clientX - lastX;
   lastX = e.clientX; lastY = e.clientY;
-  // Lower sensitivity + heavier damping (see animate()) = a heavy physical
-  // globe you nudge, not a light one you flick and send spinning.
   velY = dx * 0.0036;
   globe.rotation.y += velY;
-  // rotation.x intentionally never touched here — vertical mouse movement
-  // has no effect on tilt, by design.
 }
 function pointerUp(){
   dragging = false;
@@ -1311,6 +1306,9 @@ wrap.addEventListener('pointerdown', pointerDown);
 window.addEventListener('pointermove', pointerMove);
 window.addEventListener('pointerup', pointerUp);
 wrap.addEventListener('dragstart', e=>e.preventDefault());
+// Touch passthrough — pointer events handle touch natively on mobile,
+// but prevent page scroll while the user is spinning the globe.
+wrap.addEventListener('touchmove', e=>{ if(dragging) e.preventDefault(); }, { passive:false });
 
 function animate(){
   requestAnimationFrame(animate);

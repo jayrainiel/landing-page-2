@@ -541,12 +541,11 @@
     /* ── Globe fills the full 100svh section ── */
     .globe-wrap{
       position:absolute;
-      inset:0;
+      top:0;left:0;right:0;bottom:0;
       width:100%;
       height:100%;
       margin:0;
       transform:none;
-      left:auto;top:auto;
       display:block;
       opacity:1;
       cursor:grab;
@@ -906,8 +905,8 @@ let lastReleaseTime = -1e9; // far in the past so idle auto-rotate is full-speed
 
 function isCompact(){ return window.innerWidth <= 880; }
 
-// Move camera closer on mobile so the globe fills more of the screen
-if(isCompact()) CONFIG.cameraZ = 13.0;
+// On mobile: move camera closer and remove tilt so globe is centered
+if(isCompact()){ CONFIG.cameraZ = 13.0; CONFIG.cameraTiltDeg = 0; }
 
 function initScene(){
   renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true, precision:'highp' });

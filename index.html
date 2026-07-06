@@ -677,47 +677,50 @@
       color:rgba(216,177,90,.80);letter-spacing:.06em;text-transform:uppercase;
     }
 
-    /* ── Country popup overlay ── */
-    .marker-popup{
-      display:none;
-      position:fixed;
-      left:50%;bottom:30%;
-      transform:translateX(-50%);
-      z-index:30;
-      min-width:220px;
-      background:rgba(10,14,26,.88);
-      backdrop-filter:blur(18px) saturate(160%);
-      border:1px solid rgba(255,255,255,.14);
-      border-radius:18px;
-      padding:20px 22px 18px;
-      text-align:center;
-      color:#fff;
-      box-shadow:0 20px 60px rgba(0,0,0,.5);
-    }
-    .marker-popup.visible{display:block;}
-    .marker-popup .popup-flag{
-      width:32px;height:22px;border-radius:4px;overflow:hidden;
-      margin:0 auto 10px;box-shadow:0 0 0 1px rgba(255,255,255,.2);
-    }
-    .marker-popup .popup-flag svg{width:100%;height:100%;}
-    .marker-popup .popup-country{
-      font-size:18px;font-weight:700;margin-bottom:14px;
-      font-family:'Sora',sans-serif;letter-spacing:-.2px;
-    }
-    .marker-popup .popup-visit{
-      display:inline-flex;align-items:center;gap:8px;
-      background:linear-gradient(180deg,#3f6cf0,#1a42c4);
-      color:#fff;font-weight:700;font-size:14px;
-      padding:11px 22px;border-radius:999px;
-      text-decoration:none;
-      box-shadow:0 6px 20px rgba(30,60,200,.4);
-    }
-    .marker-popup .popup-close{
-      display:block;margin:12px auto 0;
-      background:none;border:none;color:rgba(255,255,255,.45);
-      font-size:13px;cursor:pointer;
-      font-family:'Inter',sans-serif;
-    }
+  }
+
+  /* ── Country popup (globe markers — all screen sizes) ── */
+  .marker-popup{
+    display:none;position:fixed;
+    left:50%;bottom:30%;transform:translateX(-50%);
+    z-index:300;min-width:220px;
+    background:rgba(10,14,26,.92);
+    backdrop-filter:blur(18px) saturate(160%);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:18px;padding:20px 22px 18px;
+    text-align:center;color:#fff;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .marker-popup.visible{display:block;}
+  .marker-popup .popup-flag{
+    width:40px;height:28px;border-radius:5px;overflow:hidden;
+    margin:0 auto 12px;box-shadow:0 0 0 1px rgba(255,255,255,.2);
+  }
+  .marker-popup .popup-flag svg{width:100%;height:100%;}
+  .marker-popup .popup-country{
+    font-size:18px;font-weight:700;margin-bottom:14px;
+    font-family:'Sora',sans-serif;letter-spacing:-.2px;
+  }
+  .marker-popup .popup-visit{
+    display:inline-flex;align-items:center;gap:8px;
+    background:linear-gradient(180deg,#3f6cf0,#1a42c4);
+    color:#fff;font-weight:700;font-size:14px;
+    padding:11px 22px;border-radius:999px;
+    text-decoration:none;
+    box-shadow:0 6px 20px rgba(30,60,200,.4);
+  }
+  .marker-popup .popup-soon{
+    font-family:'Sora',sans-serif;font-size:12px;font-weight:600;
+    letter-spacing:.08em;text-transform:uppercase;
+    color:rgba(216,177,90,1);
+    background:rgba(216,177,90,.12);border:1px solid rgba(216,177,90,.3);
+    border-radius:8px;padding:8px 18px;margin:0 0 2px;
+    display:inline-block;
+  }
+  .marker-popup .popup-close{
+    display:block;margin:12px auto 0;
+    background:none;border:none;color:rgba(255,255,255,.45);
+    font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -920,7 +923,7 @@
 
   <div id="markers"></div>
 
-  <!-- Mobile country popup -->
+  <!-- Country popup (desktop + mobile) -->
   <div class="marker-popup" id="markerPopup" aria-hidden="true">
     <div class="popup-flag" id="popupFlag"></div>
     <div class="popup-country" id="popupCountry"></div>
@@ -928,6 +931,7 @@
       Visit Site
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
     </a>
+    <p class="popup-soon" id="popupSoon">Coming Soon</p>
     <button class="popup-close" id="popupClose">Dismiss</button>
   </div>
 
@@ -1726,14 +1730,21 @@ CONFIG.countries.forEach(c=>{
     pill.style.cursor = 'pointer';
     pill.addEventListener('click', (e) => {
       e.stopPropagation();
-      window._openCountryModal && window._openCountryModal();
-      // For Qatar, trigger the Coming Soon toast after modal opens
+      const popup      = document.getElementById('markerPopup');
+      const visitBtn   = document.getElementById('popupVisit');
+      const soonMsg    = document.getElementById('popupSoon');
+      document.getElementById('popupFlag').innerHTML    = FLAG_SVGS[c.id];
+      document.getElementById('popupCountry').textContent = c.name;
       if (c.id === 'qatar') {
-        setTimeout(() => {
-          const qCard = document.getElementById('qatarCard');
-          if (qCard) qCard.click();
-        }, 350);
+        visitBtn.style.display = 'none';
+        soonMsg.style.display  = 'inline-block';
+      } else {
+        visitBtn.href          = MARKER_URLS[c.id];
+        visitBtn.style.display = 'inline-flex';
+        soonMsg.style.display  = 'none';
       }
+      popup.classList.add('visible');
+      popup.setAttribute('aria-hidden', 'false');
     });
   }
   anchor.appendChild(pill);

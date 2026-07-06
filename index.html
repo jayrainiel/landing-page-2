@@ -513,8 +513,11 @@
 
   .hint{
     position:absolute;bottom:26px;left:0;right:0;z-index:7;text-align:center;
-    color:var(--text-muted);font-size:12px;display:flex;align-items:center;justify-content:center;gap:8px;
+    color:var(--text-muted);font-size:12px;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
   }
+  .hint-main{display:flex;align-items:center;gap:8px;}
+  .hint-sub{font-size:11px;opacity:.65;}
 
   @media (max-width:1080px){
     .panel{width:44vw;}
@@ -936,8 +939,11 @@
   </div>
 
   <p class="hint">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="2" width="8" height="14" rx="4"/><line x1="12" y1="6" x2="12" y2="9"/></svg>
-    Click a country to explore
+    <span class="hint-main">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="2" width="8" height="14" rx="4"/><line x1="12" y1="6" x2="12" y2="9"/></svg>
+      Click a country to explore
+    </span>
+    <span class="hint-sub">Scroll the globe to see the 24/7 operations</span>
   </p>
 </div>
 

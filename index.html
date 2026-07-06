@@ -799,6 +799,15 @@
     letter-spacing:.03em;transition:color .2s;
   }
   .cmodal-close:hover{color:rgba(180,200,240,.9);}
+  .cmodal-toast{
+    text-align:center;font-family:'Sora',sans-serif;
+    font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+    color:rgba(216,177,90,1);
+    background:rgba(216,177,90,.12);border:1px solid rgba(216,177,90,.3);
+    border-radius:8px;padding:8px 16px;margin-bottom:18px;
+    opacity:0;transition:opacity .3s ease;pointer-events:none;
+  }
+  .cmodal-toast.show{opacity:1;}
   @media(max-width:480px){
     .cmodal-flags{grid-template-columns:repeat(2,1fr);}
     .cmodal-box{padding:28px 18px 24px;}
@@ -1713,19 +1722,17 @@ CONFIG.countries.forEach(c=>{
   // Slightly randomized breathing timing so labels never move in lockstep.
   pill.style.animation = `labelBreathe ${(6 + Math.random()*2).toFixed(2)}s ease-in-out infinite`;
   pill.style.animationDelay = `${(Math.random()*1.5).toFixed(2)}s`;
-  if (MARKER_URLS[c.id]) {
+  if (MARKER_URLS[c.id] || c.id === 'qatar') {
     pill.style.cursor = 'pointer';
     pill.addEventListener('click', (e) => {
-      if (window.innerWidth <= 880) {
-        e.stopPropagation();
-        document.getElementById('popupFlag').innerHTML = FLAG_SVGS[c.id];
-        document.getElementById('popupCountry').textContent = c.name;
-        document.getElementById('popupVisit').href = MARKER_URLS[c.id];
-        const popup = document.getElementById('markerPopup');
-        popup.classList.add('visible');
-        popup.setAttribute('aria-hidden','false');
-      } else {
-        window.open(MARKER_URLS[c.id], '_blank', 'noopener');
+      e.stopPropagation();
+      window._openCountryModal && window._openCountryModal();
+      // For Qatar, trigger the Coming Soon toast after modal opens
+      if (c.id === 'qatar') {
+        setTimeout(() => {
+          const qCard = document.getElementById('qatarCard');
+          if (qCard) qCard.click();
+        }, 350);
       }
     });
   }
@@ -1844,6 +1851,7 @@ try{
 <div id="countryModal" role="dialog" aria-modal="true" aria-label="Select a country">
   <div class="cmodal-box">
     <p class="cmodal-title">Select a Country</p>
+    <p id="cmodalToast" class="cmodal-toast" aria-live="polite">Qatar — Coming Soon</p>
     <div class="cmodal-flags">
 
       <!-- Syria -->
@@ -1904,10 +1912,12 @@ try{
   closeBtn.addEventListener('click', closeModal);
   // Click backdrop to close
   modal.addEventListener('click', function(e){ if(e.target===modal) closeModal(); });
-  // Qatar card — no navigation, just visual feedback
+  // Qatar card — show Coming Soon toast
   document.getElementById('qatarCard').addEventListener('click', function(){
     this.style.borderColor='rgba(216,177,90,.7)';
-    setTimeout(()=>{ this.style.borderColor=''; }, 1200);
+    const toast = document.getElementById('cmodalToast');
+    toast.classList.add('show');
+    setTimeout(()=>{ this.style.borderColor=''; toast.classList.remove('show'); }, 2200);
   });
   // Keyboard close
   document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });

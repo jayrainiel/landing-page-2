@@ -569,7 +569,7 @@
     .scene.is-night .globe-glow{
       display:block;
       left:50%;
-      top:12%;
+      top:21%;
       width:min(96vw,96svh);
       height:min(96vw,96svh);
     }
@@ -1223,10 +1223,13 @@ function initScene(){
   atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
   scene.add(atmosphere);
 
-  // On mobile, center the sun so the atmospheric glow is symmetric (not biased left/right)
+  // On mobile, center all lights so neither side is darker than the other
   if(isCompact()){
     sunLight.position.set(0, 2.6, 3.2);
     sunSecondaryLight.position.set(0, 4.2, 1.8);
+    fillLight.position.set(0, 0.5, -1.5);   // desktop: right-back; mobile: center-back
+    rimLight.position.set(0, -0.5, -2.5);    // desktop: right-back; mobile: center-back
+    ambientLight.intensity = 0.30;           // lift dark side, was 0.13
     if(atmosphere) atmosphere.material.uniforms.uSunDir.value.set(0, 2.6, 3.2).normalize();
   }
 

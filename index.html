@@ -1165,7 +1165,7 @@ function initScene(){
     // uIntensity drives the sunrise-style atmospheric reveal on load (and a
     // near-imperceptible idle "breathing" afterward) without touching the
     // base fresnel math.
-    uniforms:{ uIntensity:{ value: reduceMotion ? 1 : 0 }, uNightBlend:{ value: 0.0 } },
+    uniforms:{ uIntensity:{ value: reduceMotion ? 1 : 0 }, uNightBlend:{ value: 0.0 }, uSunDir:{ value: new THREE.Vector3(-3.2, 2.6, 3.2).normalize() } },
     vertexShader:`
       varying vec3 vNormal;
       varying vec3 vWorldPos;
@@ -1180,11 +1180,12 @@ function initScene(){
     fragmentShader:`
       uniform float uIntensity;
       uniform float uNightBlend;
+      uniform vec3 uSunDir;
       varying vec3 vNormal;
       varying vec3 vWorldPos;
       void main(){
         vec3 viewDir = normalize(cameraPosition - vWorldPos);
-        vec3 sunDir     = normalize(vec3(-3.2, 2.6, 3.2));
+        vec3 sunDir     = normalize(uSunDir);
         vec3 worldNorm  = normalize(vWorldPos);
         float sunFacing = dot(worldNorm, sunDir);
         vec3 warmAtmo = vec3(1.000, 0.995, 0.985);
@@ -1202,6 +1203,13 @@ function initScene(){
   });
   atmosphere = new THREE.Mesh(atmoGeo, atmoMat);
   scene.add(atmosphere);
+
+  // On mobile, center the sun so the atmospheric glow is symmetric (not biased left/right)
+  if(isCompact()){
+    sunLight.position.set(0, 2.6, 3.2);
+    sunSecondaryLight.position.set(0, 4.2, 1.8);
+    if(atmosphere) atmosphere.material.uniforms.uSunDir.value.set(0, 2.6, 3.2).normalize();
+  }
 
   // Derived from latLonToVec3's convention so the chosen lon truly faces
   // the camera (+Z): rotation.y = -lon(rad) - 90deg.

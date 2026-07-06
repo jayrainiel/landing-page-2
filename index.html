@@ -342,6 +342,11 @@
     transition:opacity .4s cubic-bezier(.16,1,.3,1), transform .4s cubic-bezier(.16,1,.3,1);
   }
   .marker-anchor.revealed{opacity:1;transform:translate(-50%,-100%) translateY(0) scale(1);}
+  /* KSA: anchor right edge at labelX, vertically centred — connector hits the right side */
+  .marker-anchor.anchor-right{
+    opacity:0;transform:translate(-100%,-50%) translateY(6px) scale(.96);
+  }
+  .marker-anchor.anchor-right.revealed{opacity:1;transform:translate(-100%,-50%) translateY(0) scale(1);}
 
   .pill-label{display:flex;flex-direction:column;gap:2px;}
   .pill-country{font-size:13px;font-weight:600;color:#eef4ff;line-height:1.15;letter-spacing:.01em;}
@@ -653,6 +658,80 @@
     .hub-glow{animation:none;}
     .cta{transition:none;}
   }
+
+  /* ── Country picker modal ── */
+  @keyframes modalIn{from{opacity:0;transform:translate(-50%,-50%) scale(.88);}to{opacity:1;transform:translate(-50%,-50%) scale(1);}}
+  @keyframes cardIn{from{opacity:0;transform:translateY(28px) scale(.94);}to{opacity:1;transform:translateY(0) scale(1);}}
+  #countryModal{
+    display:none;position:fixed;inset:0;z-index:200;
+    background:rgba(4,10,26,.72);backdrop-filter:blur(18px) saturate(160%);
+  }
+  #countryModal.open{display:flex;align-items:center;justify-content:center;}
+  .cmodal-box{
+    position:absolute;top:50%;left:50%;
+    transform:translate(-50%,-50%) scale(.88);opacity:0;
+    background:rgba(8,16,36,.92);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:24px;padding:36px 28px 32px;
+    width:min(92vw,480px);
+    box-shadow:0 32px 80px rgba(0,0,0,.55);
+    animation:none;
+  }
+  #countryModal.open .cmodal-box{
+    animation:modalIn .38s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  .cmodal-title{
+    text-align:center;font-family:'Sora',sans-serif;
+    font-size:15px;font-weight:600;letter-spacing:.04em;
+    color:rgba(200,220,255,.55);text-transform:uppercase;
+    margin-bottom:28px;
+  }
+  .cmodal-flags{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+  }
+  .cmodal-card{
+    display:flex;flex-direction:column;align-items:center;gap:12px;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;padding:20px 10px 16px;
+    cursor:pointer;
+    transition:background .2s,border-color .2s,transform .18s;
+    opacity:0;
+    text-decoration:none;
+  }
+  #countryModal.open .cmodal-card{
+    animation:cardIn .42s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  #countryModal.open .cmodal-card:nth-child(1){animation-delay:.06s;}
+  #countryModal.open .cmodal-card:nth-child(2){animation-delay:.13s;}
+  #countryModal.open .cmodal-card:nth-child(3){animation-delay:.20s;}
+  #countryModal.open .cmodal-card:nth-child(4){animation-delay:.27s;}
+  .cmodal-card:hover{background:rgba(255,255,255,.09);border-color:rgba(216,177,90,.45);transform:translateY(-3px);}
+  .cmodal-flag-wrap{
+    width:52px;height:36px;border-radius:6px;overflow:hidden;
+    box-shadow:0 2px 12px rgba(0,0,0,.45);
+    flex-shrink:0;
+  }
+  .cmodal-flag-wrap svg{width:100%;height:100%;display:block;}
+  .cmodal-country{
+    font-family:'Sora',sans-serif;font-size:11px;font-weight:600;
+    color:#d0e4ff;text-align:center;line-height:1.3;letter-spacing:.02em;
+  }
+  .cmodal-soon{
+    font-size:9px;font-weight:500;color:rgba(216,177,90,.75);
+    letter-spacing:.05em;text-transform:uppercase;margin-top:2px;
+  }
+  .cmodal-close{
+    display:block;margin:26px auto 0;
+    background:none;border:none;color:rgba(180,200,240,.4);
+    font-size:13px;cursor:pointer;font-family:'Inter',sans-serif;
+    letter-spacing:.03em;transition:color .2s;
+  }
+  .cmodal-close:hover{color:rgba(180,200,240,.9);}
+  @media(max-width:480px){
+    .cmodal-flags{grid-template-columns:repeat(2,1fr);}
+    .cmodal-box{padding:28px 18px 24px;}
+  }
 </style>
 </head>
 <body>
@@ -753,7 +832,7 @@ const CONFIG = {
     // true projected lat/lon) so close-together Gulf countries don't overlap.
     { id:'uae',   name:'UAE',   city:'Abu Dhabi', lat:24.4539, lon:54.3773, hub:true,  labelDx:72,  labelDy:-8  },
     { id:'qatar', name:'Qatar', city:'Doha',      lat:25.2854, lon:51.5310, hub:false, labelDx:22,  labelDy:-58 },
-    { id:'ksa',   name:'KSA',   city:'Riyadh',    lat:24.7136, lon:46.6753, hub:false, labelDx:-82, labelDy:65  },
+    { id:'ksa',   name:'KSA',   city:'Riyadh',    lat:24.7136, lon:46.6753, hub:false, labelDx:-82, labelDy:36, anchorClass:'anchor-right' },
     { id:'syria', name:'Syria', city:'Damascus',  lat:33.5138, lon:36.2765, hub:false, labelDx:-8,  labelDy:-6  }
   ],
   hubId: 'uae',
@@ -1478,7 +1557,7 @@ CONFIG.countries.forEach(c=>{
   // own perpetual idle breathing — kept on separate elements so the two
   // animations never fight over the same transform property.
   const anchor = document.createElement('div');
-  anchor.className = 'marker-anchor';
+  anchor.className = 'marker-anchor' + (c.anchorClass ? ' '+c.anchorClass : '');
   const pill = document.createElement('div');
   pill.className = 'marker-pill' + (c.hub ? ' is-hub' : '');
   pill.innerHTML = `<span class="flag">${FLAG_SVGS[c.id]}</span><span class="pill-label"><span class="pill-country">${c.name}</span><span class="pill-city">${c.city||''}</span></span>`;
@@ -1610,6 +1689,79 @@ try{
 }catch(e){
   console.error('Globe failed to initialize', e);
 }
+</script>
+
+<!-- ── Country Picker Modal ── -->
+<div id="countryModal" role="dialog" aria-modal="true" aria-label="Select a country">
+  <div class="cmodal-box">
+    <p class="cmodal-title">Select a Country</p>
+    <div class="cmodal-flags">
+
+      <!-- Syria -->
+      <a class="cmodal-card" href="https://capitalambulance.me" target="_blank" rel="noopener">
+        <div class="cmodal-flag-wrap">
+          <svg viewBox="0 0 24 18" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="18" fill="#007a3d"/><rect y="6" width="24" height="6" fill="#fff"/><rect y="12" width="24" height="6" fill="#000"/><g fill="#ce1126"><polygon points="7,7.6 7.6,9.4 9.4,9.4 7.9,10.5 8.5,12.3 7,11.2 5.5,12.3 6.1,10.5 4.6,9.4 6.4,9.4"/><polygon points="12,7.6 12.6,9.4 14.4,9.4 12.9,10.5 13.5,12.3 12,11.2 10.5,12.3 11.1,10.5 9.6,9.4 11.4,9.4"/><polygon points="17,7.6 17.6,9.4 19.4,9.4 17.9,10.5 18.5,12.3 17,11.2 15.5,12.3 16.1,10.5 14.6,9.4 16.4,9.4"/></g></svg>
+        </div>
+        <span class="cmodal-country">Syria</span>
+      </a>
+
+      <!-- KSA -->
+      <a class="cmodal-card" href="https://capitalambulance.sa" target="_blank" rel="noopener">
+        <div class="cmodal-flag-wrap">
+          <svg viewBox="0 0 24 18" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="18" fill="#0b5c2e"/><rect x="3" y="7.5" width="14" height="3" fill="#fff"/></svg>
+        </div>
+        <span class="cmodal-country">Kingdom of Saudi Arabia</span>
+      </a>
+
+      <!-- UAE -->
+      <a class="cmodal-card" href="https://capitalambulance.ae" target="_blank" rel="noopener">
+        <div class="cmodal-flag-wrap">
+          <svg viewBox="0 0 24 18" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="18" fill="#fff"/><rect width="24" height="6" fill="#00732f"/><rect y="12" width="24" height="6" fill="#000"/><rect width="6" height="18" fill="#ff0000"/></svg>
+        </div>
+        <span class="cmodal-country">United Arab Emirates</span>
+      </a>
+
+      <!-- Qatar – Coming Soon -->
+      <div class="cmodal-card" id="qatarCard">
+        <div class="cmodal-flag-wrap">
+          <svg viewBox="0 0 24 18" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="18" fill="#8d1b3d"/><polygon points="0,0 8,0 4,2 8,4 4,6 8,8 4,10 8,12 4,14 8,16 4,18 0,18" fill="#fff"/></svg>
+        </div>
+        <span class="cmodal-country">Qatar</span>
+        <span class="cmodal-soon">Coming Soon</span>
+      </div>
+
+    </div>
+    <button class="cmodal-close" id="cmodalClose">Dismiss ✕</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const modal   = document.getElementById('countryModal');
+  const closeBtn= document.getElementById('cmodalClose');
+  const cta     = document.querySelector('.cta');
+
+  function openModal(){
+    modal.classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+  function closeModal(){
+    modal.classList.remove('open');
+    document.body.style.overflow='';
+  }
+
+  cta.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  // Click backdrop to close
+  modal.addEventListener('click', function(e){ if(e.target===modal) closeModal(); });
+  // Qatar card — no navigation, just visual feedback
+  document.getElementById('qatarCard').addEventListener('click', function(){
+    this.style.borderColor='rgba(216,177,90,.7)';
+    setTimeout(()=>{ this.style.borderColor=''; }, 1200);
+  });
+  // Keyboard close
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
+})();
 </script>
 </body>
 </html>

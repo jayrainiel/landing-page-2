@@ -564,9 +564,9 @@
     .globe-glow,.stars,.sun-flare{display:block;}
     #arcs{display:none;}
 
-    /* Re-center the globe-glow ring — desktop puts it at left:78.4% which
-       appears on the right side of the globe on portrait phones */
-    .globe-glow{
+    /* In night mode, re-center the glow ring to the globe center.
+       Day-mode ring stays at its sun-side position (intentional). */
+    .scene.is-night .globe-glow{
       left:50%;
       top:50%;
       width:min(96vw,96svh);

@@ -564,14 +564,20 @@
     .globe-glow,.stars,.sun-flare{display:block;}
     #arcs{display:none;}
 
-    /* Hide the glow ring during day on mobile; show centered in night mode only */
+    /* Hide the glow ring during day on mobile; show near globe top in night mode */
     .globe-glow{display:none;}
     .scene.is-night .globe-glow{
       display:block;
       left:50%;
-      top:50%;
+      top:12%;
       width:min(96vw,96svh);
       height:min(96vw,96svh);
+    }
+
+    /* Center the night background overlay — desktop offsets it to 70% left
+       which makes the left side of the globe pitch-black on mobile */
+    .scene.is-night::before{
+      background:radial-gradient(ellipse 120% 120% at 50% 50%, #030c1e 0%, #010609 100%);
     }
 
     /* Fade at the bottom of the globe section into the panel */

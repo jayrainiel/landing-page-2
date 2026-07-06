@@ -564,9 +564,10 @@
     .globe-glow,.stars,.sun-flare{display:block;}
     #arcs{display:none;}
 
-    /* In night mode, re-center the glow ring to the globe center.
-       Day-mode ring stays at its sun-side position (intentional). */
+    /* Hide the glow ring during day on mobile; show centered in night mode only */
+    .globe-glow{display:none;}
     .scene.is-night .globe-glow{
+      display:block;
       left:50%;
       top:50%;
       width:min(96vw,96svh);

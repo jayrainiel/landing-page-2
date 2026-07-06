@@ -1604,9 +1604,9 @@ function animate(){
     );
     hemiLight.intensity         = 0.52 * (1 - nightBlend * 0.30);
     if(isCompact()){
-      // White ambient at high intensity so the dark hemisphere stays visible
-      ambientLight.color.setRGB(0.90, 0.95, 1.0);
-      ambientLight.intensity = 0.80 + nightBlend * 0.25;
+      // Soft blue-white ambient — dark side stays visible like desktop, not washed out
+      ambientLight.color.setRGB(0.70, 0.84, 1.0);
+      ambientLight.intensity = 0.45 + nightBlend * 0.30;
     } else {
       ambientLight.color.setHex(0x4a6890);
       ambientLight.intensity = 0.13 + nightBlend * 0.18;

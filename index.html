@@ -530,8 +530,8 @@
       min-height:100svh;
       overflow:visible;
     }
-    html,body{height:auto;overflow:visible;}
-    body{overflow-x:hidden;}
+    html{height:auto;overflow-y:auto;overflow-x:hidden;}
+    body{height:auto;overflow-y:auto;overflow-x:hidden;}
 
     /* ── Globe hero: full viewport height, globe almost edge-to-edge ── */
     .globe-section{
@@ -1603,13 +1603,20 @@ function animate(){
       1.0
     );
     hemiLight.intensity         = 0.52 * (1 - nightBlend * 0.30);
-    ambientLight.intensity      = (isCompact() ? 0.42 : 0.13) + nightBlend * 0.18;
+    if(isCompact()){
+      // White ambient at high intensity so the dark hemisphere stays visible
+      ambientLight.color.setRGB(0.90, 0.95, 1.0);
+      ambientLight.intensity = 0.80 + nightBlend * 0.25;
+    } else {
+      ambientLight.color.setHex(0x4a6890);
+      ambientLight.intensity = 0.13 + nightBlend * 0.18;
+    }
   }
 
   // Globe surface: shift to cool night blue — keep terrain visible, not black
   if(globe.material){
-    // On mobile raise the brightness floor so the dark side stays visible
-    const nightDim = isCompact() ? 0.28 : 0.52;
+    // On mobile don't dim the globe texture — ambient handles the dark side
+    const nightDim = isCompact() ? 0.08 : 0.52;
     const g = 1 - nightBlend * nightDim;
     const b = Math.min(1, g + nightBlend * 0.22);
     globe.material.color.setRGB(g * 0.88, g * 0.92, b);

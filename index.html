@@ -1456,14 +1456,34 @@ let dragging = false, lastX = 0, lastY = 0, velY = 0, cloudDrift = 0;
 let oscCenter = null, oscDir = 1;
 const OSC_RANGE = Math.PI / 2; // 90 degrees each way
 let accumRot = 0, lastGlobeYTrack = null, nightBlend = 0;
+// Direction lock for mobile: wait to see if the swipe is horizontal (spin) or vertical (scroll)
+let dragStartX = 0, dragStartY = 0, directionLocked = false;
 
 function pointerDown(e){
-  dragging = true;
-  wrap.classList.add('is-dragging');
   lastX = e.clientX; lastY = e.clientY;
+  dragStartX = e.clientX; dragStartY = e.clientY;
+  directionLocked = false;
   velY = 0;
+  // On desktop start drag immediately; on mobile wait for direction detection
+  if(!isCompact()){
+    dragging = true;
+    wrap.classList.add('is-dragging');
+  }
 }
 function pointerMove(e){
+  // On mobile: detect direction before committing to globe-spin
+  if(isCompact() && !directionLocked){
+    const dx = Math.abs(e.clientX - dragStartX);
+    const dy = Math.abs(e.clientY - dragStartY);
+    if(dx + dy < 6) return; // not moved enough yet
+    directionLocked = true;
+    if(dx > dy){
+      // Horizontal swipe → spin the globe
+      dragging = true;
+      wrap.classList.add('is-dragging');
+    }
+    // Vertical swipe → let browser scroll; dragging stays false
+  }
   if(!dragging) return;
   const dx = e.clientX - lastX;
   lastX = e.clientX; lastY = e.clientY;
@@ -1472,6 +1492,7 @@ function pointerMove(e){
 }
 function pointerUp(){
   dragging = false;
+  directionLocked = false;
   wrap.classList.remove('is-dragging');
   lastReleaseTime = performance.now();
 }
@@ -1479,8 +1500,7 @@ wrap.addEventListener('pointerdown', pointerDown);
 window.addEventListener('pointermove', pointerMove);
 window.addEventListener('pointerup', pointerUp);
 wrap.addEventListener('dragstart', e=>e.preventDefault());
-// Touch passthrough — pointer events handle touch natively on mobile,
-// but prevent page scroll while the user is spinning the globe.
+// Prevent page scroll only when a confirmed horizontal globe-spin is active
 wrap.addEventListener('touchmove', e=>{ if(dragging) e.preventDefault(); }, { passive:false });
 
 function animate(){

@@ -1608,8 +1608,10 @@ function animate(){
 
   // Globe surface: shift to cool night blue — keep terrain visible, not black
   if(globe.material){
-    const g = 1 - nightBlend * 0.52;           // 48% brightness floor at full night
-    const b = Math.min(1, g + nightBlend * 0.22); // blue channel stays lifted
+    // On mobile raise the brightness floor so the dark side stays visible
+    const nightDim = isCompact() ? 0.28 : 0.52;
+    const g = 1 - nightBlend * nightDim;
+    const b = Math.min(1, g + nightBlend * 0.22);
     globe.material.color.setRGB(g * 0.88, g * 0.92, b);
   }
 
@@ -1623,7 +1625,7 @@ function animate(){
   if(atmosphere) atmosphere.material.uniforms.uNightBlend.value = nightBlend;
 
   // Tone mapping: subtle pull-down only, keep enough exposure to see terrain
-  renderer.toneMappingExposure = 1.28 - nightBlend * 0.26;
+  renderer.toneMappingExposure = 1.28 - nightBlend * (isCompact() ? 0.08 : 0.26);
 
   // Markers + full page: CSS night class for all day/night theme transitions
   const isNight = nightBlend > 0.12;

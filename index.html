@@ -569,9 +569,9 @@
     .scene.is-night .globe-glow{
       display:block;
       left:50%;
-      top:21%;
-      width:min(96vw,96svh);
-      height:min(96vw,96svh);
+      top:50%;
+      width:140svh;
+      height:140svh;
     }
 
     /* Center the night background overlay — desktop offsets it to 70% left
@@ -1603,7 +1603,7 @@ function animate(){
       1.0
     );
     hemiLight.intensity         = 0.52 * (1 - nightBlend * 0.30);
-    ambientLight.intensity      = 0.13 + nightBlend * 0.18;
+    ambientLight.intensity      = (isCompact() ? 0.42 : 0.13) + nightBlend * 0.18;
   }
 
   // Globe surface: shift to cool night blue — keep terrain visible, not black

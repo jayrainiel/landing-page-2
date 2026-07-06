@@ -530,7 +530,7 @@
       min-height:100svh;
       overflow:visible;
     }
-    html,body{overflow:visible;}
+    html,body{height:auto;overflow:visible;}
     body{overflow-x:hidden;}
 
     /* ── Globe hero: full viewport height, globe almost edge-to-edge ── */
@@ -1396,7 +1396,9 @@ function buildNightLights(nightTexture){
   if(nightMesh) return;
   // Same fixed world-space direction as the "sun" DirectionalLight above,
   // so lights only appear on the hemisphere actually facing away from it.
-  const sunDir = new THREE.Vector3(-3.2, 2.6, 3.2).normalize();
+  const sunDir = isCompact()
+    ? new THREE.Vector3(0, 2.6, 3.2).normalize()
+    : new THREE.Vector3(-3.2, 2.6, 3.2).normalize();
   const geo = new THREE.SphereGeometry(CONFIG.globeRadius*1.001, 96, 96);
   const mat = new THREE.ShaderMaterial({
     transparent:true, blending:THREE.AdditiveBlending, depthWrite:false,
